@@ -33,16 +33,21 @@ enum WordScript {
                 set tailText to content of tailRange as text
                 if operation is "start" then
                     set targetWindow to active window of chosen
-                    if window state of targetWindow is not window state minimize then
-                        set window state of targetWindow to window state minimize
+                    if window state of targetWindow is window state minimize then
+                        set window state of targetWindow to window state normal
                     end if
+                    activate object chosen
+                    activate
                     repeat 8 times
-                        if window state of active window of chosen is window state minimize then
-                            return {endPosition, tailText}
+                        if window state of active window of chosen is not window state minimize then
+                            set frontDocument to active document
+                            if my sameText((name of frontDocument as text), docName) and my sameText((full name of frontDocument as text), docPath) then
+                                return {endPosition, tailText}
+                            end if
                         end if
                         delay 0.1
                     end repeat
-                    error "Word could not minimize the target window." number 7001
+                    error "Word could not show the selected document window." number 7001
                 end if
 
                 set expectedPosition to item 3 of args

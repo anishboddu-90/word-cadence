@@ -1,6 +1,6 @@
 # Word Cadence
 
-Word Cadence is a native macOS utility for writing text into a minimized Microsoft Word document at a configurable pace. Use manual text or transcribe photos with your ChatGPT account, then review the text before starting a run.
+Word Cadence is a native macOS utility for writing text into an open Microsoft Word document at a configurable pace. Use manual text or transcribe photos with your ChatGPT account, then review the text before starting a run.
 
 ## Get started
 
@@ -8,7 +8,7 @@ Word Cadence is a native macOS utility for writing text into a minimized Microso
 2. Open an editable document in Microsoft Word for Mac. Click Refresh next to **Word destination** and allow Word Cadence to control Word if macOS prompts you. Review this permission under **System Settings → Privacy & Security → Automation**.
 3. Choose the document in **Word destination**. Refresh the list if you just opened it.
 4. Enter or paste text in **Manual Text**, or follow the photo workflow below.
-5. Set the **WPM** and optionally adjust **Corrected typos**. Select **Write to Word**. The app minimizes the document window and appends the text at the end, including any leading line breaks you enter. Save the document in Word when ready.
+5. Set the **WPM** and optionally adjust **Corrected typos**. Select **Write to Word**. The app brings the selected Word window forward, restores it if minimized, and appends the text at the end, including any leading line breaks you enter. Save the document in Word when ready.
 
 Use **Pause** and **Resume** to suspend a run. **Stop** leaves the completed text in Word and attempts to remove any temporary typo. Keep Word open and avoid editing the destination during a run. If the document's end changes, the app stops. Protected or read-only documents and documents with Track Changes enabled are rejected.
 
@@ -24,7 +24,7 @@ Image data is sent to OpenAI when you request or retry transcription. The app pr
 
 ## Pace and scope
 
-Choose 10–180 WPM. Word response times affect the achieved rate. The pacing engine schedules variable intervals, pauses at text boundaries, and optional corrected substitutions. Background edits come from Word's automation interface. They are distinguishable from physical keystrokes, and the app makes no claim of detector passability or biometric matching. [Typing research](docs/typing-research.md)
+Choose 10–180 WPM. Word response times affect the achieved rate. The pacing engine schedules variable intervals, pauses at text boundaries, and optional corrected substitutions. Word Cadence sends edits through Word's automation interface. [Typing research](docs/typing-research.md)
 
 The review panel floats across regular apps and macOS Spaces. macOS controls visibility over secure screens, system dialogs, and some full-screen environments.
 

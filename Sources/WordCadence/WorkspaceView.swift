@@ -116,7 +116,7 @@ struct WorkspaceView: View {
             .labelsHidden()
             .accessibilityLabel("Open Word document")
             .frame(maxWidth: .infinity)
-            Text(wordMessage ?? "Appends at the end and minimizes the Word window.")
+            Text(wordMessage ?? "Brings the selected Word document forward and appends at the end.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
