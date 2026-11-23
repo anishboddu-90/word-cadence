@@ -36,6 +36,9 @@ Requires macOS 14+, Swift 5.10+ and the Xcode Command Line Tools. The app has no
 scripts/build-app.sh
 swift run CadenceChecks
 swift run WordCadence --verify-word
+swift run WordCadence --verify-photos
 ```
 
 The first command writes `dist/Word Cadence.zip`. The Word check requires an already-running copy of Word and Automation permission. It creates and closes a disposable unsaved document.
+
+The photo check uses synthetic photos and a simulated ChatGPT response. It verifies loopback state, image upload formatting, and the proposed order and questions without using a paid account.

@@ -15,6 +15,19 @@ enum EntryPoint {
             }
             return
         }
+        if CommandLine.arguments.dropFirst() == ["--verify-photos"] {
+            Task {
+                do {
+                    try await PhotoIntegrationCheck.run()
+                    exit(0)
+                } catch {
+                    FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))
+                    exit(1)
+                }
+            }
+            RunLoop.main.run()
+            return
+        }
         #endif
         WordCadenceApp.main()
     }
