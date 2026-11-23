@@ -17,10 +17,12 @@ app="$stage/Word Cadence.app"
 mkdir -p "$app/Contents/MacOS"
 cp packaging/Info.plist "$app/Contents/Info.plist"
 install -m 0755 "$binary_dir/WordCadence" "$app/Contents/MacOS/WordCadence"
+# Finder metadata can be inherited by artifacts built in the Documents folder.
+xattr -cr "$app"
 codesign --force --sign - --options runtime --entitlements packaging/Automation.entitlements "$app"
 codesign --verify --strict "$app"
 
 archive="dist/Word Cadence.zip"
 rm -f "$archive"
-/usr/bin/ditto -c -k --keepParent "$app" "$archive"
+/usr/bin/ditto -c -k --norsrc --keepParent "$app" "$archive"
 echo "$PWD/$archive"
