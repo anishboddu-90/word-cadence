@@ -8,9 +8,9 @@ Word Cadence is a native macOS utility for writing text into an open Microsoft W
 2. Open an editable document in Microsoft Word for Mac. Click Refresh next to **Word destination** and allow Word Cadence to control Word if macOS prompts you. Review this permission under **System Settings → Privacy & Security → Automation**.
 3. Choose the document in **Word destination**. Refresh the list if you just opened it.
 4. Enter or paste text in **Manual Text**, or follow the photo workflow below.
-5. Choose a **Window mode**, set the **WPM**, and optionally adjust **Corrected typos**. Select **Write to Word** to append text at the end, including any leading line breaks you enter. Save the document in Word when ready.
+5. Choose a **Window mode** and set **Average WPM**. Optionally adjust **Burst WPM** and **Corrected typos**. Select **Write to Word** to append text at the end, including any leading line breaks you enter. Save the document in Word when ready.
 
-Use **Pause** and **Resume** to suspend a run. **Stop** leaves the completed text in Word and attempts to remove any temporary typo. Keep Word open and avoid editing the destination during a run. If the document's end changes, the app stops. The destination needs to be editable. With **Track Changes** enabled, Word records the writing as revisions and keeps your existing revisions available for review. Documents that allow only tracked edits also work.
+Use **Pause** and **Resume** to suspend a run. **Stop** leaves the completed text in Word and attempts to fix any pending typo. Keep Word open and avoid editing the destination during a run. If the document's end changes, the app stops. The destination needs to be editable. With **Track Changes** enabled, Word records the writing as revisions and keeps your existing revisions available for review. Documents that allow only tracked edits also work.
 
 ## Window modes
 
@@ -32,7 +32,9 @@ Image data is sent to OpenAI when you request or retry transcription. The app pr
 
 ## Pace and scope
 
-Choose 10–180 WPM. Word response times affect the achieved rate. The pacing engine schedules variable intervals, pauses at text boundaries, and optional corrected substitutions. Word Cadence sends edits through Word's automation interface. [Typing research](docs/typing-research.md)
+**Average WPM** targets 10–180 WPM across the entire run. **Burst WPM** targets the speed of short stretches in longer words and starts at 85 WPM. You can turn bursts off. The burst target is kept above the average and capped at 240 WPM. Word response times affect the achieved rates.
+
+Sentence openings tend to run faster after a pause. Optional typos are corrected either immediately or after up to three more letters in the same word. Word Cadence sends edits through Word's automation interface. [Typing research](docs/typing-research.md)
 
 The review panel floats across regular apps and macOS Spaces. macOS controls visibility over secure screens, system dialogs, and some full-screen environments.
 

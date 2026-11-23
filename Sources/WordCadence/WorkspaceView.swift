@@ -13,6 +13,8 @@ struct WorkspaceView: View {
     @StateObject private var account = AccountSession()
 
     @AppStorage("targetWPM") private var wpm = 55
+    @AppStorage("burstWPM") private var burstWPM = 85
+    @AppStorage("useTypingBursts") private var useTypingBursts = true
     @AppStorage("correctionPercent") private var corrections = 2
     @AppStorage("wordWindowMode") private var windowMode = WordWindowMode.visible
     @State private var source = TextSource.manual
@@ -24,7 +26,9 @@ struct WorkspaceView: View {
 
     private var writing: Bool { run.phase != .idle }
     private var text: String { source == .manual ? manual : photos.transcript }
-    private var pace: Pace { Pace(wordsPerMinute: wpm, correctionPercent: corrections) }
+    private var pace: Pace {
+        Pace(wordsPerMinute: wpm, burstWordsPerMinute: useTypingBursts ? burstWPM : nil, correctionPercent: corrections)
+    }
     private var characterCount: Int { text.count }
 
     var body: some View {
@@ -133,16 +137,29 @@ struct WorkspaceView: View {
         VStack(alignment: .leading, spacing: 11) {
             Label("Pace", systemImage: "speedometer").font(.headline)
             HStack {
-                TextField("Words per minute", value: $wpm, format: .number)
+                TextField("Average WPM", value: $wpm, format: .number)
                     .labelsHidden()
-                    .accessibilityLabel("Words per minute")
+                    .accessibilityLabel("Average words per minute")
                     .frame(width: 52)
-                Stepper("WPM", value: $wpm, in: Pace.speedRange)
+                Stepper("Average WPM", value: $wpm, in: Pace.speedRange)
                 Spacer()
             }
             Slider(value: Binding(get: { Double(pace.wordsPerMinute) }, set: { wpm = Int($0) }),
                    in: Double(Pace.speedRange.lowerBound)...Double(Pace.speedRange.upperBound), step: 1)
-                .accessibilityLabel("Words per minute")
+                .accessibilityLabel("Average words per minute")
+            HStack {
+                Toggle("Burst WPM", isOn: $useTypingBursts)
+                Spacer()
+                TextField("Burst WPM", value: Binding(
+                    get: { pace.burstWordsPerMinute ?? burstWPM },
+                    set: { burstWPM = $0 }
+                ), format: .number)
+                .labelsHidden()
+                .accessibilityLabel("Burst words per minute")
+                .frame(width: 52)
+                .disabled(!useTypingBursts)
+            }
+            .help("Target speed for short bursts, up to 240 WPM.")
             Stepper(value: $corrections, in: Pace.correctionRange) {
                 Text("Corrected typos  \(pace.correctionPercent)%")
             }
@@ -178,6 +195,7 @@ struct WorkspaceView: View {
                 Button("Write to Word") {
                     guard let target else { return }
                     wpm = pace.wordsPerMinute
+                    if let burst = pace.burstWordsPerMinute { burstWPM = burst }
                     corrections = pace.correctionPercent
                     run.start(text: text, pace: pace, document: target, mode: windowMode)
                 }

@@ -4,6 +4,6 @@
 
 [Fuchs and Krivokapić, Frontiers in Psychology 2016](https://doi.org/10.3389/fpsyg.2016.01678) measured longer pauses at stronger linguistic boundaries during an email-writing task. The app assigns extra time at word, sentence and paragraph boundaries. These are tendencies. The paper studies composition, and the app is transferring a fixed transcript.
 
-The app schedules document edits using variable intervals, short runs of faster or slower edits, and optional adjacent-letter corrections. These are heuristics inspired by the studies. Word receives automation events, which contain document edits instead of physical key-down and key-up timing.
+The app schedules document edits with variable intervals, pauses around punctuation and paragraph breaks, and short bursts in longer words. It also biases the opening letters of a sentence toward shorter intervals. When typo simulation is enabled, the app sometimes corrects adjacent-letter substitutions immediately and sometimes after up to three additional letters. These timing choices are heuristics. Word receives automation events.
 
-The conventional five-character word defines the WPM target. The timing budget covers scripted pauses and optional corrections. Word's response speed, especially on long documents and at high WPM, can lower the achieved speed.
+The conventional five-character word defines both WPM targets. The average covers the full run, including pauses and corrections. The burst target covers the faster intervals. Word's response speed, especially on long documents and at high WPM, can lower the achieved speed.
