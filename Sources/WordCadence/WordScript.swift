@@ -1,0 +1,76 @@
+enum WordScript {
+    static let source = """
+    on dispatchCommand(operation, args)
+        with timeout of 4 seconds
+            tell application id "com.microsoft.Word"
+                if operation is "list" then
+                    set results to {}
+                    repeat with doc in documents
+                        set end of results to {(name of doc as text), (full name of doc as text)}
+                    end repeat
+                    return results
+                end if
+
+                set docName to item 1 of args
+                set docPath to item 2 of args
+                set chosen to missing value
+                repeat with candidate in documents
+                    considering case
+                        if (name of candidate as text) is docName and (full name of candidate as text) is docPath then
+                            if chosen is not missing value then error "More than one Word document has that name and path." number 7001
+                            set chosen to contents of candidate
+                        end if
+                    end considering
+                end repeat
+                if chosen is missing value then error "The target document was closed or renamed." number 7001
+                if read only of chosen or protection type of chosen is not no document protection then
+                    error "The target Word document is read-only or protected." number 7001
+                end if
+                if track revisions of chosen then error "Turn off Track Changes in the target before writing." number 7001
+
+                set endPosition to (end of content of text object of chosen) - 1
+                set tailStart to endPosition - 48
+                if tailStart < 0 then set tailStart to 0
+                set tailRange to create range chosen start tailStart end endPosition
+                set tailText to content of tailRange as text
+                if operation is "start" then
+                    set targetWindow to active window of chosen
+                    if window state of targetWindow is not window state minimize then
+                        set window state of targetWindow to window state minimize
+                    end if
+                    if window state of targetWindow is not window state minimize then
+                        error "Word could not minimize the target window." number 7001
+                    end if
+                    return {endPosition, tailText}
+                end if
+
+                set expectedPosition to item 3 of args
+                set expectedTail to item 4 of args
+                set removal to item 5 of args
+                set insertion to item 6 of args
+                considering case, diacriticals, punctuation, white space, hyphens, expansion
+                    if endPosition is not expectedPosition or tailText is not expectedTail then
+                        error "The end of the Word document changed during writing. The run stopped." number 7001
+                    end if
+                    set editStart to endPosition
+                    if removal is not "" then
+                        set editStart to endPosition - 1
+                        if editStart < 0 then error "The pending correction is unavailable." number 7001
+                        set checkRange to create range chosen start editStart end endPosition
+                        if (content of checkRange as text) is not removal then
+                            error "The pending correction no longer matches." number 7001
+                        end if
+                    end if
+                end considering
+                set editRange to create range chosen start editStart end endPosition
+                set content of editRange to insertion
+                set newEnd to (end of content of text object of chosen) - 1
+                set tailStart to newEnd - 48
+                if tailStart < 0 then set tailStart to 0
+                set tailRange to create range chosen start tailStart end newEnd
+                return {newEnd, (content of tailRange as text)}
+            end tell
+        end timeout
+    end dispatchCommand
+    """
+}
