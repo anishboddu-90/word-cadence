@@ -21,7 +21,8 @@ enum WordScript {
                     end if
                 end repeat
                 if chosen is missing value then error "The target document was closed or renamed." number 7001
-                if read only of chosen or protection type of chosen is not no document protection then
+                set editProtection to protection type of chosen
+                if read only of chosen or (editProtection is not no document protection and editProtection is not allow only revisions) then
                     error "The target Word document is read-only or protected." number 7001
                 end if
                 set endPosition to (end of content of text object of chosen) - 1
