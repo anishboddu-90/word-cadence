@@ -69,15 +69,17 @@ enum WordScript {
                     error "The end of the Word document changed during writing. The run stopped." number 7001
                 end if
                 set editStart to endPosition
+                set editEnd to endPosition
                 if removal is not "" then
-                    set editStart to endPosition - 1
-                    if editStart < 0 then error "The pending correction is unavailable." number 7001
-                    set checkRange to create range chosen start editStart end endPosition
+                    set editStart to item 7 of args
+                    if editStart < tailStart or editStart ≥ endPosition then error "The pending correction is unavailable." number 7001
+                    set editEnd to editStart + 1
+                    set checkRange to create range chosen start editStart end editEnd
                     if not my sameText((content of checkRange as text), removal) then
                         error "The pending correction no longer matches." number 7001
                     end if
                 end if
-                set editRange to create range chosen start editStart end endPosition
+                set editRange to create range chosen start editStart end editEnd
                 set content of editRange to insertion
                 set newEnd to (end of content of text object of chosen) - 1
                 set tailStart to newEnd - 48

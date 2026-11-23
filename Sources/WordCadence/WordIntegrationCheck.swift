@@ -79,8 +79,10 @@ enum WordIntegrationCheck {
         """)
 
         var tail = try await client.begin(fixture, mode: .visible)
+        let mistakePosition = tail.position
         tail = try client.edit(fixture, tail: tail, with: "w")
-        tail = try client.edit(fixture, tail: tail, replacing: "w", with: "q")
+        tail = try client.edit(fixture, tail: tail, with: "er")
+        tail = try client.edit(fixture, tail: tail, replacing: "w", at: mistakePosition, with: "q")
         tail = try client.edit(fixture, tail: tail, with: "z")
         _ = try client.edit(fixture, tail: tail, replacing: "z", with: "")
 
@@ -96,9 +98,9 @@ enum WordIntegrationCheck {
         return {(track revisions of fixture), insertedText, deletedText, (content of text object of fixture as text), (protection type of fixture is allow only revisions)}
         """)
         try check(result.atIndex(1)?.booleanValue == true, "Track Changes was turned off.")
-        try check(result.atIndex(2)?.stringValue == "q", "Word did not retain the intended tracked insertion.")
+        try check(result.atIndex(2)?.stringValue == "qer", "Word did not retain the intended tracked insertion.")
         try check(result.atIndex(3)?.stringValue == "X", "Word changed an existing tracked deletion.")
-        try check(result.atIndex(4)?.stringValue == "Existing draft q\r", "The corrected text is wrong with Track Changes enabled.")
+        try check(result.atIndex(4)?.stringValue == "Existing draft qer\r", "The corrected text is wrong with Track Changes enabled.")
         try check(result.atIndex(5)?.booleanValue == locked, "Word changed the document's editing restrictions.")
     }
 

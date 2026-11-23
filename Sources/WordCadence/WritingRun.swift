@@ -5,6 +5,12 @@ import Foundation
 final class WritingRun: ObservableObject {
     enum Phase { case idle, writing, paused, stopping }
 
+    private struct PendingCorrection {
+        let position: Int32
+        let typed: String
+        let intended: String
+    }
+
     @Published private(set) var phase = Phase.idle
     @Published private(set) var completed = 0
     @Published private(set) var total = 0
@@ -55,7 +61,7 @@ final class WritingRun: ObservableObject {
         }
 
         var tail: WordTail?
-        var pendingMistake: String?
+        var pending: PendingCorrection?
         let clock = ContinuousClock()
         do {
             try Task.checkCancellation()
@@ -69,7 +75,7 @@ final class WritingRun: ObservableObject {
                 // Absorb small Apple-event delays without racing to catch up after a slowdown.
                 deadline = max(deadline, clock.now - .milliseconds(70)) + .seconds(step.delay)
                 try await clock.sleep(until: deadline)
-                if phase == .paused && pendingMistake == nil {
+                if phase == .paused {
                     let pausedAt = clock.now
                     while phase == .paused {
                         try await Task.sleep(for: .milliseconds(50))
@@ -82,20 +88,25 @@ final class WritingRun: ObservableObject {
                 case .append(let character):
                     tail = try word.edit(document, tail: current, with: character)
                     completed += 1
-                case .mistake(let character):
-                    tail = try word.edit(document, tail: current, with: character)
-                    pendingMistake = character
+                case .mistake(let typed, let intended):
+                    guard pending == nil else { throw AppFailure.wordResponse }
+                    tail = try word.edit(document, tail: current, with: typed)
+                    pending = PendingCorrection(position: current.position, typed: typed, intended: intended)
                 case .correct(let mistake, let character):
-                    tail = try word.edit(document, tail: current, replacing: mistake, with: character)
-                    pendingMistake = nil
+                    guard let correction = pending, correction.typed == mistake, correction.intended == character else {
+                        throw AppFailure.wordResponse
+                    }
+                    tail = try word.edit(document, tail: current, replacing: mistake, at: correction.position, with: character)
+                    pending = nil
                     completed += 1
                 }
             }
             message = "Finished writing \(completed.formatted()) characters to \(document.name)."
         } catch {
-            if let tail, let pendingMistake {
+            if let tail, let pending {
                 do {
-                    _ = try word.edit(document, tail: tail, replacing: pendingMistake, with: "")
+                    _ = try word.edit(document, tail: tail, replacing: pending.typed, at: pending.position, with: pending.intended)
+                    completed += 1
                 } catch {
                     message = "Stopped after \(completed.formatted()) characters. Check the end of the document for a pending typo. \(error.localizedDescription)"
                     return

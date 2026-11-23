@@ -10,4 +10,10 @@ final class PaceTests {
     func testWPMUsesFiveCharactersPerWord() {
         checkEqual(Pace(wordsPerMinute: 60).targetDuration(for: 300), 60)
     }
+
+    func testBurstSpeedIsOptionalAndFasterThanAverage() {
+        checkEqual(Pace().burstWordsPerMinute, nil)
+        checkEqual(Pace(wordsPerMinute: 155, burstWordsPerMinute: 90).burstWordsPerMinute, 156)
+        checkEqual(Pace(burstWordsPerMinute: 999).burstWordsPerMinute, 240)
+    }
 }

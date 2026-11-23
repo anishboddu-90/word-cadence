@@ -5,8 +5,11 @@ enum Runner {
     static func main() {
         PaceTests().testSpeedAndCorrectionSettingsAreBounded()
         PaceTests().testWPMUsesFiveCharactersPerWord()
+        PaceTests().testBurstSpeedIsOptionalAndFasterThanAverage()
         TypingPlanTests().testTimingBudgetAndExactReplay()
         TypingPlanTests().testDisabledCorrectionsAndEmptyText()
+        TypingPlanTests().testBurstHasItsOwnAverageWithoutChangingTheRunDuration()
+        TypingPlanTests().testSentenceStartsGenerallyRunFaster()
         PageChecks.run()
         print("All cadence checks passed.")
     }

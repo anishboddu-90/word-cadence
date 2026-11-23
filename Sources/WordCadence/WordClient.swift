@@ -75,12 +75,14 @@ final class WordClient {
         try await WordWindowAccess.setFullScreen(enabled, windowCaption: caption, wordPID: word.processIdentifier)
     }
 
-    func edit(_ document: WordDocument, tail: WordTail, replacing expected: String = "", with text: String) throws -> WordTail {
+    func edit(_ document: WordDocument, tail: WordTail, replacing expected: String = "",
+              at position: Int32? = nil, with text: String) throws -> WordTail {
         let args = identity(document) + [
             NSAppleEventDescriptor(int32: tail.position),
             NSAppleEventDescriptor(string: tail.text),
             NSAppleEventDescriptor(string: expected),
-            NSAppleEventDescriptor(string: text.replacingOccurrences(of: "\n", with: "\r"))
+            NSAppleEventDescriptor(string: text.replacingOccurrences(of: "\n", with: "\r")),
+            NSAppleEventDescriptor(int32: position ?? tail.position - 1)
         ]
         return try readTail(call("edit", arguments: args))
     }
