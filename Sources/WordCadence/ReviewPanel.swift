@@ -16,7 +16,7 @@ final class ReviewPanel: NSPanel {
         hidesOnDeactivate = false
         becomesKeyOnlyIfNeeded = false
         isReleasedWhenClosed = false
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        collectionBehavior = [.canJoinAllSpaces, .canJoinAllApplications]
         contentViewController = NSHostingController(rootView: content())
     }
 

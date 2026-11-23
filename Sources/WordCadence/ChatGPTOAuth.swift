@@ -41,6 +41,7 @@ struct ChatGPTOAuth {
             parameters["agent_name_hint"] = "Word Cadence"
         }
         authorize.queryItems = parameters.map { URLQueryItem(name: $0.key, value: $0.value) }
+        authorize.percentEncodedQuery = authorize.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
         try Task.checkCancellation()
         guard let url = authorize.url, NSWorkspace.shared.open(url) else {
             throw AppFailure.setup("Could not open ChatGPT sign-in in your browser.")

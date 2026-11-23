@@ -85,6 +85,7 @@ final class AccountSession: ObservableObject {
     func transcribe(_ photos: [SourcePhoto], guidance: String) async throws -> CadenceCore.PageProposal {
         let model = modelID
         let token = try await accessToken()
+        try Task.checkCancellation()
         return try await transcriber.transcribe(photos, model: model, token: token, guidance: guidance)
     }
 

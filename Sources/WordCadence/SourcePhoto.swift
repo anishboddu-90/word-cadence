@@ -30,11 +30,31 @@ struct SourcePhoto: Identifiable, Sendable {
                 throw AppFailure.setup("Could not prepare \(url.lastPathComponent).")
             }
             let quality = [kCGImageDestinationLossyCompressionQuality: 0.88] as CFDictionary
-            CGImageDestinationAddImage(output, image, quality)
+            CGImageDestinationAddImage(output, try flattenTransparency(image, name: url.lastPathComponent), quality)
             guard CGImageDestinationFinalize(output), data.length <= 4_000_000 else {
                 throw AppFailure.setup("\(url.lastPathComponent) is too large after processing. Crop the photo and try again.")
             }
             return SourcePhoto(id: firstID + index, name: url.lastPathComponent, jpeg: data as Data)
         }
+    }
+
+    private static func flattenTransparency(_ image: CGImage, name: String) throws -> CGImage {
+        switch image.alphaInfo {
+        case .none, .noneSkipFirst, .noneSkipLast: return image
+        default: break
+        }
+        guard let context = CGContext(data: nil, width: image.width, height: image.height, bitsPerComponent: 8,
+                                      bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else {
+            throw AppFailure.setup("Could not prepare the background of \(name).")
+        }
+        let bounds = CGRect(x: 0, y: 0, width: image.width, height: image.height)
+        context.setFillColor(CGColor(gray: 1, alpha: 1))
+        context.fill(bounds)
+        context.draw(image, in: bounds)
+        guard let flattened = context.makeImage() else {
+            throw AppFailure.setup("Could not prepare the background of \(name).")
+        }
+        return flattened
     }
 }
