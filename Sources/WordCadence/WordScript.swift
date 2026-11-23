@@ -5,7 +5,7 @@ enum WordScript {
             tell application id "com.microsoft.Word"
                 if operation is "list" then
                     set results to {}
-                    repeat with doc in documents
+                    repeat with doc in (get documents)
                         set end of results to {(name of doc as text), (full name of doc as text)}
                     end repeat
                     return results
@@ -14,13 +14,11 @@ enum WordScript {
                 set docName to item 1 of args
                 set docPath to item 2 of args
                 set chosen to missing value
-                repeat with candidate in documents
-                    considering case
-                        if (name of candidate as text) is docName and (full name of candidate as text) is docPath then
-                            if chosen is not missing value then error "More than one Word document has that name and path." number 7001
-                            set chosen to contents of candidate
-                        end if
-                    end considering
+                repeat with candidate in (get documents)
+                    if my sameText((name of candidate as text), docName) and my sameText((full name of candidate as text), docPath) then
+                        if chosen is not missing value then error "More than one Word document has that name and path." number 7001
+                        set chosen to contents of candidate
+                    end if
                 end repeat
                 if chosen is missing value then error "The target document was closed or renamed." number 7001
                 if read only of chosen or protection type of chosen is not no document protection then
@@ -38,30 +36,31 @@ enum WordScript {
                     if window state of targetWindow is not window state minimize then
                         set window state of targetWindow to window state minimize
                     end if
-                    if window state of targetWindow is not window state minimize then
-                        error "Word could not minimize the target window." number 7001
-                    end if
-                    return {endPosition, tailText}
+                    repeat 8 times
+                        if window state of active window of chosen is window state minimize then
+                            return {endPosition, tailText}
+                        end if
+                        delay 0.1
+                    end repeat
+                    error "Word could not minimize the target window." number 7001
                 end if
 
                 set expectedPosition to item 3 of args
                 set expectedTail to item 4 of args
                 set removal to item 5 of args
                 set insertion to item 6 of args
-                considering case, diacriticals, punctuation, white space, hyphens, expansion
-                    if endPosition is not expectedPosition or tailText is not expectedTail then
-                        error "The end of the Word document changed during writing. The run stopped." number 7001
+                if endPosition is not expectedPosition or not my sameText(tailText, expectedTail) then
+                    error "The end of the Word document changed during writing. The run stopped." number 7001
+                end if
+                set editStart to endPosition
+                if removal is not "" then
+                    set editStart to endPosition - 1
+                    if editStart < 0 then error "The pending correction is unavailable." number 7001
+                    set checkRange to create range chosen start editStart end endPosition
+                    if not my sameText((content of checkRange as text), removal) then
+                        error "The pending correction no longer matches." number 7001
                     end if
-                    set editStart to endPosition
-                    if removal is not "" then
-                        set editStart to endPosition - 1
-                        if editStart < 0 then error "The pending correction is unavailable." number 7001
-                        set checkRange to create range chosen start editStart end endPosition
-                        if (content of checkRange as text) is not removal then
-                            error "The pending correction no longer matches." number 7001
-                        end if
-                    end if
-                end considering
+                end if
                 set editRange to create range chosen start editStart end endPosition
                 set content of editRange to insertion
                 set newEnd to (end of content of text object of chosen) - 1
@@ -72,5 +71,9 @@ enum WordScript {
             end tell
         end timeout
     end dispatchCommand
+
+    on sameText(leftText, rightText)
+        return (id of leftText) is (id of rightText)
+    end sameText
     """
 }
