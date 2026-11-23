@@ -7,6 +7,7 @@ enum Runner {
         PaceTests().testWPMUsesFiveCharactersPerWord()
         TypingPlanTests().testTimingBudgetAndExactReplay()
         TypingPlanTests().testDisabledCorrectionsAndEmptyText()
+        PageChecks.run()
         print("All cadence checks passed.")
     }
 }
