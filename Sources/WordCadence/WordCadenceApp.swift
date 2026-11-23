@@ -1,6 +1,5 @@
 import SwiftUI
 
-@main
 @MainActor
 struct WordCadenceApp: App {
     @NSApplicationDelegateAdaptor(AppLifecycle.self) private var lifecycle
