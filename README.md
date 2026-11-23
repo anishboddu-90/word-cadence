@@ -8,9 +8,17 @@ Word Cadence is a native macOS utility for writing text into an open Microsoft W
 2. Open an editable document in Microsoft Word for Mac. Click Refresh next to **Word destination** and allow Word Cadence to control Word if macOS prompts you. Review this permission under **System Settings → Privacy & Security → Automation**.
 3. Choose the document in **Word destination**. Refresh the list if you just opened it.
 4. Enter or paste text in **Manual Text**, or follow the photo workflow below.
-5. Set the **WPM** and optionally adjust **Corrected typos**. Select **Write to Word**. The app brings the selected Word window forward, restores it if minimized, and appends the text at the end, including any leading line breaks you enter. Save the document in Word when ready.
+5. Choose a **Window mode**, set the **WPM**, and optionally adjust **Corrected typos**. Select **Write to Word** to append text at the end, including any leading line breaks you enter. Save the document in Word when ready.
 
-Use **Pause** and **Resume** to suspend a run. **Stop** leaves the completed text in Word and attempts to remove any temporary typo. Keep Word open and avoid editing the destination during a run. If the document's end changes, the app stops. Protected or read-only documents and documents with Track Changes enabled are rejected.
+Use **Pause** and **Resume** to suspend a run. **Stop** leaves the completed text in Word and attempts to remove any temporary typo. Keep Word open and avoid editing the destination during a run. If the document's end changes, the app stops. The destination needs to be editable. With **Track Changes** enabled, Word records the writing as revisions and keeps your existing revisions available for review. Documents that allow only tracked edits also work.
+
+## Window modes
+
+- **Visible** brings the selected Word window forward and restores it from the Dock if needed.
+- **Minimized** sends edits to the selected document while its window stays in the Dock. A Word window in macOS Full Screen must exit Full Screen before it can minimize. Word Cadence can exit it with Accessibility permission, or you can exit it in Word first.
+- **Full Screen** brings the selected Word document into macOS Full Screen. Allow Word Cadence in **System Settings → Privacy & Security → Accessibility** when prompted, then click **Write to Word** again.
+
+Window mode changes where Word appears on screen. In each mode the edits are sent through Word's automation interface.
 
 ## Transcribe photos
 
@@ -39,6 +47,6 @@ swift run WordCadence --verify-word
 swift run WordCadence --verify-photos
 ```
 
-The first command writes `dist/Word Cadence.zip`. The Word check requires an already-running copy of Word and Automation permission. It creates and closes a disposable unsaved document.
+The first command writes `dist/Word Cadence.zip`. The Word check requires an already-running copy of Word and Automation permission. It creates and closes disposable unsaved documents. Give the test runner Accessibility permission to test the automatic Full Screen transition.
 
 The photo check uses synthetic photos and a simulated ChatGPT response. It verifies loopback state, image upload formatting, and the proposed order and questions without using a paid account.
