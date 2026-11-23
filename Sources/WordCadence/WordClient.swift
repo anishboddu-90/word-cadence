@@ -48,8 +48,31 @@ final class WordClient {
         }
     }
 
-    func begin(_ document: WordDocument) throws -> WordTail {
-        try readTail(call("start", arguments: identity(document)))
+    func begin(_ document: WordDocument, mode: WordWindowMode) async throws -> WordTail {
+        if mode == .fullScreen { try WordWindowAccess.requireAccessibility() }
+        do {
+            let result = try beginWord(document, minimized: mode == .minimized)
+            if mode == .fullScreen {
+                try await changeFullScreen(true, start: result)
+            }
+            return try readTail(result)
+        } catch AppFailure.wordMinimize where WordWindowAccess.isTrusted {
+            let visible = try beginWord(document, minimized: false)
+            try await changeFullScreen(false, start: visible)
+            return try readTail(beginWord(document, minimized: true))
+        }
+    }
+
+    private func beginWord(_ document: WordDocument, minimized: Bool) throws -> NSAppleEventDescriptor {
+        try call("start", arguments: identity(document) + [NSAppleEventDescriptor(boolean: minimized)])
+    }
+
+    private func changeFullScreen(_ enabled: Bool, start: NSAppleEventDescriptor) async throws {
+        guard let caption = start.atIndex(3)?.stringValue, !caption.isEmpty,
+              let word = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).first else {
+            throw AppFailure.wordResponse
+        }
+        try await WordWindowAccess.setFullScreen(enabled, windowCaption: caption, wordPID: word.processIdentifier)
     }
 
     func edit(_ document: WordDocument, tail: WordTail, replacing expected: String = "", with text: String) throws -> WordTail {
@@ -67,7 +90,7 @@ final class WordClient {
     }
 
     private func readTail(_ descriptor: NSAppleEventDescriptor) throws -> WordTail {
-        guard descriptor.numberOfItems == 2,
+        guard descriptor.numberOfItems >= 2,
               let position = descriptor.atIndex(1)?.int32Value,
               let text = descriptor.atIndex(2)?.stringValue else { throw AppFailure.wordResponse }
         return WordTail(position: position, text: text)
@@ -112,6 +135,7 @@ final class WordClient {
         if number == -1712 {
             return AppFailure.setup("Microsoft Word did not respond. Close any dialogs in Word and check the document before retrying.")
         }
+        if number == 7002 { return AppFailure.wordMinimize }
         let message = details?[NSAppleScript.errorMessage] as? String
         return AppFailure.setup(message ?? "Microsoft Word did not return a usable response.")
     }

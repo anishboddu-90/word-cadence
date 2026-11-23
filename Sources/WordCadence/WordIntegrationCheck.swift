@@ -4,14 +4,14 @@ import Foundation
 
 @MainActor
 enum WordIntegrationCheck {
-    static func run() throws {
+    static func run() async throws {
         let client = WordClient()
         _ = try client.documents()
         let prefix = "Existing fixture. " + String(repeating: "🧪", count: 28)
         let fixture = try makeFixture(prefix)
         defer { try? closeFixture(fixture) }
 
-        var tail = try client.begin(fixture)
+        var tail = try await client.begin(fixture, mode: .visible)
         let opened = try snapshot(fixture)
         try check(!opened.minimized && opened.isActive, "Word must show and activate the selected window.")
         for character in "á🙋🏽‍♂️\nfirst\tline\n" {
@@ -40,11 +40,33 @@ enum WordIntegrationCheck {
         } catch {
             try check(error.localizedDescription.contains("closed or renamed"), "Wrong closed-document error: \(error.localizedDescription)")
         }
-        try checkTrackedEdits(using: client)
-        print("Word check passed: visible target window, exact Unicode text, typo replacement/removal, and document-change guards.")
+        try await checkTrackedEdits(using: client)
+        try await checkWindowModes(using: client)
+        print("Word check passed: window modes, exact Unicode text, tracked corrections, and document-change guards.")
     }
 
-    private static func checkTrackedEdits(using client: WordClient) throws {
+    private static func checkWindowModes(using client: WordClient) async throws {
+        let fixture = try makeFixture("Window mode fixture. ")
+        defer { try? closeFixture(fixture) }
+        var expected = "Window mode fixture. "
+        if WordWindowAccess.isTrusted {
+            let fullScreen = try await client.begin(fixture, mode: .fullScreen)
+            _ = try client.edit(fixture, tail: fullScreen, with: "Full screen. ")
+            expected += "Full screen. "
+        } else {
+            print("Skipped Full Screen transition. Grant Accessibility to the test runner to cover it.")
+        }
+        let minimized = try await client.begin(fixture, mode: .minimized)
+        _ = try client.edit(fixture, tail: minimized, with: "Minimized.")
+        let afterWriting = try snapshot(fixture)
+        try check(afterWriting.minimized, "Word did not stay minimized while writing.")
+        try check(afterWriting.text == expected + "Minimized.\r", "Window mode changed the document text.")
+        _ = try await client.begin(fixture, mode: .visible)
+        let restored = try snapshot(fixture)
+        try check(!restored.minimized && restored.isActive, "Visible mode did not restore the Word window.")
+    }
+
+    private static func checkTrackedEdits(using client: WordClient) async throws {
         let fixture = try makeFixture("Existing draft X")
         defer { try? closeFixture(fixture) }
         _ = try execute("prepare tracked changes", """
@@ -54,7 +76,7 @@ enum WordIntegrationCheck {
         set content of deleteRange to ""
         """)
 
-        var tail = try client.begin(fixture)
+        var tail = try await client.begin(fixture, mode: .visible)
         tail = try client.edit(fixture, tail: tail, with: "w")
         tail = try client.edit(fixture, tail: tail, replacing: "w", with: "q")
         tail = try client.edit(fixture, tail: tail, with: "z")

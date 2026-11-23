@@ -7,28 +7,29 @@ enum EntryPoint {
     static func main() {
         #if DEBUG
         if CommandLine.arguments.dropFirst() == ["--verify-word"] {
-            do {
-                try WordIntegrationCheck.run()
-            } catch {
-                FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))
-                exit(1)
-            }
+            runCheck(WordIntegrationCheck.run)
             return
         }
         if CommandLine.arguments.dropFirst() == ["--verify-photos"] {
-            Task {
-                do {
-                    try await PhotoIntegrationCheck.run()
-                    exit(0)
-                } catch {
-                    FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))
-                    exit(1)
-                }
-            }
-            RunLoop.main.run()
+            runCheck(PhotoIntegrationCheck.run)
             return
         }
         #endif
         WordCadenceApp.main()
     }
+
+    #if DEBUG
+    private static func runCheck(_ check: @escaping @MainActor () async throws -> Void) {
+        Task {
+            do {
+                try await check()
+                exit(0)
+            } catch {
+                FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))
+                exit(1)
+            }
+        }
+        RunLoop.main.run()
+    }
+    #endif
 }

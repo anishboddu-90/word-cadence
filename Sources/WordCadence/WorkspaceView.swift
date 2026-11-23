@@ -14,6 +14,7 @@ struct WorkspaceView: View {
 
     @AppStorage("targetWPM") private var wpm = 55
     @AppStorage("correctionPercent") private var corrections = 2
+    @AppStorage("wordWindowMode") private var windowMode = WordWindowMode.visible
     @State private var source = TextSource.manual
     @State private var manual = ""
     @State private var documents: [WordDocument] = []
@@ -116,7 +117,12 @@ struct WorkspaceView: View {
             .labelsHidden()
             .accessibilityLabel("Open Word document")
             .frame(maxWidth: .infinity)
-            Text(wordMessage ?? "Brings the selected Word document forward and appends at the end.")
+            Picker("Window mode", selection: $windowMode) {
+                ForEach(WordWindowMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            Text(wordMessage ?? windowMode.detail)
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
@@ -173,7 +179,7 @@ struct WorkspaceView: View {
                     guard let target else { return }
                     wpm = pace.wordsPerMinute
                     corrections = pace.correctionPercent
-                    run.start(text: text, pace: pace, document: target)
+                    run.start(text: text, pace: pace, document: target, mode: windowMode)
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(text.isEmpty || target == nil || (source == .photos && photos.busy))

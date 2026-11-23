@@ -17,7 +17,7 @@ final class WritingRun: ObservableObject {
         self.word = word
     }
 
-    func start(text: String, pace: Pace, document: WordDocument) {
+    func start(text: String, pace: Pace, document: WordDocument, mode: WordWindowMode) {
         guard phase == .idle else { return }
         let text = TypingPlan.normalize(text)
         guard !text.isEmpty else { return }
@@ -29,7 +29,7 @@ final class WritingRun: ObservableObject {
         total = text.count
         phase = .writing
         message = "Preparing \(document.name)…"
-        task = Task { await execute(text: text, pace: pace, document: document) }
+        task = Task { await execute(text: text, pace: pace, document: document, mode: mode) }
     }
 
     func togglePause() {
@@ -48,7 +48,7 @@ final class WritingRun: ObservableObject {
         task?.cancel()
     }
 
-    private func execute(text: String, pace: Pace, document: WordDocument) async {
+    private func execute(text: String, pace: Pace, document: WordDocument, mode: WordWindowMode) async {
         defer {
             phase = .idle
             task = nil
@@ -59,7 +59,7 @@ final class WritingRun: ObservableObject {
         let clock = ContinuousClock()
         do {
             try Task.checkCancellation()
-            tail = try word.begin(document)
+            tail = try await word.begin(document, mode: mode)
             var random = SystemRandomNumberGenerator()
             let plan = TypingPlan.make(text: text, pace: pace, random: &random)
             if phase == .writing { message = "Writing to \(document.name)…" }
