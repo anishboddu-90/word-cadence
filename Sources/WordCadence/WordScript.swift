@@ -24,8 +24,6 @@ enum WordScript {
                 if read only of chosen or protection type of chosen is not no document protection then
                     error "The target Word document is read-only or protected." number 7001
                 end if
-                if track revisions of chosen then error "Turn off Track Changes in the target before writing." number 7001
-
                 set endPosition to (end of content of text object of chosen) - 1
                 set tailStart to endPosition - 48
                 if tailStart < 0 then set tailStart to 0

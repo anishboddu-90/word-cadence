@@ -40,7 +40,41 @@ enum WordIntegrationCheck {
         } catch {
             try check(error.localizedDescription.contains("closed or renamed"), "Wrong closed-document error: \(error.localizedDescription)")
         }
+        try checkTrackedEdits(using: client)
         print("Word check passed: visible target window, exact Unicode text, typo replacement/removal, and document-change guards.")
+    }
+
+    private static func checkTrackedEdits(using client: WordClient) throws {
+        let fixture = try makeFixture("Existing draft X")
+        defer { try? closeFixture(fixture) }
+        _ = try execute("prepare tracked changes", """
+        set fixture to document \(literal(fixture.name))
+        set track revisions of fixture to true
+        set deleteRange to create range fixture start 15 end 16
+        set content of deleteRange to ""
+        """)
+
+        var tail = try client.begin(fixture)
+        tail = try client.edit(fixture, tail: tail, with: "w")
+        tail = try client.edit(fixture, tail: tail, replacing: "w", with: "q")
+        tail = try client.edit(fixture, tail: tail, with: "z")
+        _ = try client.edit(fixture, tail: tail, replacing: "z", with: "")
+
+        let result = try execute("check retained revisions", """
+        set fixture to document \(literal(fixture.name))
+        set insertedText to ""
+        set deletedText to ""
+        repeat with trackedEdit in (get revisions of fixture)
+            set changedText to content of text object of trackedEdit as text
+            if revision type of trackedEdit is revision insert then set insertedText to insertedText & changedText
+            if revision type of trackedEdit is revision delete then set deletedText to deletedText & changedText
+        end repeat
+        return {(track revisions of fixture), insertedText, deletedText, (content of text object of fixture as text)}
+        """)
+        try check(result.atIndex(1)?.booleanValue == true, "Track Changes was turned off.")
+        try check(result.atIndex(2)?.stringValue == "q", "Word did not retain the intended tracked insertion.")
+        try check(result.atIndex(3)?.stringValue == "X", "Word changed an existing tracked deletion.")
+        try check(result.atIndex(4)?.stringValue == "Existing draft q\r", "The corrected text is wrong with Track Changes enabled.")
     }
 
     private static func makeFixture(_ text: String) throws -> WordDocument {
