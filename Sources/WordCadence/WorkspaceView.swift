@@ -19,6 +19,7 @@ struct WorkspaceView: View {
     @State private var documents: [WordDocument] = []
     @State private var target: WordDocument?
     @State private var wordMessage: String?
+    @State private var checkingWord = false
 
     private var writing: Bool { run.phase != .idle }
     private var text: String { source == .manual ? manual : photos.transcript }
@@ -81,7 +82,7 @@ struct WorkspaceView: View {
             footer.padding(.horizontal, 20).padding(.vertical, 13)
         }
         .frame(minWidth: 820, minHeight: 550)
-        .task { reloadDocuments() }
+        .task { await reloadDocuments(prompt: false) }
         .onChange(of: source) { _, selection in
             if selection == .photos { account.load() }
         }
@@ -92,7 +93,16 @@ struct WorkspaceView: View {
             HStack {
                 Label("Word destination", systemImage: "doc.text").font(.headline)
                 Spacer()
-                Button(action: reloadDocuments) { Image(systemName: "arrow.clockwise") }
+                Button {
+                    Task { await reloadDocuments(prompt: true) }
+                } label: {
+                    if checkingWord {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                }
+                    .disabled(checkingWord)
                     .help("Refresh open Word documents")
                     .accessibilityLabel("Refresh open Word documents")
             }
@@ -171,8 +181,14 @@ struct WorkspaceView: View {
         }
     }
 
-    private func reloadDocuments() {
+    private func reloadDocuments(prompt: Bool) async {
+        guard !checkingWord else { return }
+        checkingWord = true
+        defer { checkingWord = false }
+        if prompt { wordMessage = "Checking Word access. Respond to the macOS prompt if it appears." }
         do {
+            try await word.checkPermission(prompt: prompt)
+            try Task.checkCancellation()
             let found = try word.documents()
             documents = Array(Set(found)).sorted {
                 $0.name == $1.name ? $0.path < $1.path : $0.name.localizedStandardCompare($1.name) == .orderedAscending

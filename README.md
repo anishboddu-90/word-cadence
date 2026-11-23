@@ -5,7 +5,7 @@ Word Cadence is a native macOS utility for writing text into a minimized Microso
 ## Get started
 
 1. Unzip **Word Cadence.zip** and open **Word Cadence.app**. The download is a locally built, ad-hoc-signed app for Apple silicon. The source builds for the architecture of the Mac running the build.
-2. Open an editable document in Microsoft Word for Mac. If macOS prompts you, allow Word Cadence to control Word. Review this permission under **System Settings → Privacy & Security → Automation**.
+2. Open an editable document in Microsoft Word for Mac. Click Refresh next to **Word destination** and allow Word Cadence to control Word if macOS prompts you. Review this permission under **System Settings → Privacy & Security → Automation**.
 3. Choose the document in **Word destination**. Refresh the list if you just opened it.
 4. Enter or paste text in **Manual Text**, or follow the photo workflow below.
 5. Set the **WPM** and optionally adjust **Corrected typos**. Select **Write to Word**. The app minimizes the document window and appends the text at the end, including any leading line breaks you enter. Save the document in Word when ready.

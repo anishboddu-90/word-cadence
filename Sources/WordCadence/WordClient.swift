@@ -1,4 +1,5 @@
 import AppKit
+import CoreServices
 
 struct WordDocument: Identifiable, Hashable {
     let name: String
@@ -15,6 +16,27 @@ struct WordTail {
 final class WordClient {
     private let script = NSAppleScript(source: WordScript.source)
     private let bundleIdentifier = "com.microsoft.Word"
+
+    func checkPermission(prompt: Bool) async throws {
+        let bundleIdentifier = self.bundleIdentifier
+        guard !NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).isEmpty else {
+            throw AppFailure.setup("Open Microsoft Word and the document you want to write to.")
+        }
+        let status = await Task.detached(priority: .userInitiated) {
+            let target = NSAppleEventDescriptor(bundleIdentifier: bundleIdentifier)
+            return AEDeterminePermissionToAutomateTarget(target.aeDesc, typeWildCard, typeWildCard, prompt)
+        }.value
+        switch status {
+        case noErr:
+            return
+        case Int32(errAEEventWouldRequireUserConsent):
+            throw AppFailure.setup("Click Refresh to grant Word Cadence permission to control Microsoft Word.")
+        case Int32(errAEEventNotPermitted):
+            throw AppFailure.setup(Self.permissionInstructions)
+        default:
+            throw AppFailure.setup("Could not check Microsoft Word access (\(status)). Open Word and click Refresh.")
+        }
+    }
 
     func documents() throws -> [WordDocument] {
         let result = try call("list")
@@ -80,10 +102,12 @@ final class WordClient {
         return result
     }
 
+    private static let permissionInstructions = "Allow Word Cadence to control Microsoft Word in System Settings → Privacy & Security → Automation, then refresh."
+
     private func wordError(_ details: NSDictionary?) -> Error {
         let number = details?[NSAppleScript.errorNumber] as? Int
-        if number == -1743 {
-            return AppFailure.setup("Allow Word Cadence to control Microsoft Word in System Settings → Privacy & Security → Automation, then retry.")
+        if number == Int(errAEEventNotPermitted) || number == Int(errAEEventWouldRequireUserConsent) {
+            return AppFailure.setup(Self.permissionInstructions)
         }
         if number == -1712 {
             return AppFailure.setup("Microsoft Word did not respond. Close any dialogs in Word and check the document before retrying.")

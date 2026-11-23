@@ -48,7 +48,7 @@ enum WordIntegrationCheck {
     }
 
     private static func makeFixture(_ text: String) throws -> WordDocument {
-        let result = try execute("""
+        let result = try execute("create fixture", """
         set fixture to make new document
         set firstRange to create range fixture start 0 end 0
         set content of firstRange to \(literal(text))
@@ -61,7 +61,7 @@ enum WordIntegrationCheck {
     }
 
     private static func snapshot(_ fixture: WordDocument) throws -> (String, Bool) {
-        let result = try execute("""
+        let result = try execute("read fixture", """
         set fixture to document \(literal(fixture.name))
         if (full name of fixture as text) is not \(literal(fixture.path)) then error "Fixture changed."
         return {(content of text object of fixture as text), (window state of active window of fixture is window state minimize)}
@@ -73,7 +73,7 @@ enum WordIntegrationCheck {
     }
 
     private static func closeFixture(_ fixture: WordDocument) throws {
-        _ = try execute("""
+        _ = try execute("close fixture", """
         if exists document \(literal(fixture.name)) then
             set fixture to document \(literal(fixture.name))
             if (full name of fixture as text) is \(literal(fixture.path)) then close fixture saving no
@@ -81,9 +81,9 @@ enum WordIntegrationCheck {
         """)
     }
 
-    private static func execute(_ code: String) throws -> NSAppleEventDescriptor {
+    private static func execute(_ operation: String, _ code: String) throws -> NSAppleEventDescriptor {
         let script = NSAppleScript(source: """
-        with timeout of 4 seconds
+        with timeout of 12 seconds
             tell application id "com.microsoft.Word"
                 \(code)
             end tell
@@ -92,7 +92,8 @@ enum WordIntegrationCheck {
         var error: NSDictionary?
         let result = script?.executeAndReturnError(&error)
         guard error == nil, let result else {
-            throw AppFailure.setup(error?[NSAppleScript.errorMessage] as? String ?? "Could not execute the Word check.")
+            let detail = error?[NSAppleScript.errorMessage] as? String ?? "Word returned no script response."
+            throw AppFailure.setup("Could not \(operation). \(detail)")
         }
         return result
     }
