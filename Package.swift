@@ -8,6 +8,6 @@ let package = Package(
     targets: [
         .target(name: "CadenceCore"),
         .executableTarget(name: "WordCadence", dependencies: ["CadenceCore"]),
-        .testTarget(name: "CadenceCoreTests", dependencies: ["CadenceCore"])
+        .executableTarget(name: "CadenceChecks", dependencies: ["CadenceCore"], path: "Tests/CadenceCoreTests")
     ]
 )

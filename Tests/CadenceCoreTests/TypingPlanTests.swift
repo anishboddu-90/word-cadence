@@ -1,5 +1,4 @@
 import CadenceCore
-import XCTest
 
 private struct RepeatableRandom: RandomNumberGenerator {
     var state: UInt64 = 1
@@ -10,37 +9,37 @@ private struct RepeatableRandom: RandomNumberGenerator {
     }
 }
 
-final class TypingPlanTests: XCTestCase {
+final class TypingPlanTests {
     func testTimingBudgetAndExactReplay() {
         var random = RepeatableRandom()
         let input = String(repeating: "Hello World! é 🧪\r\n\t", count: 50)
         let expected = TypingPlan.normalize(input)
         let pace = Pace(wordsPerMinute: 80, correctionPercent: 8)
         let steps = TypingPlan.make(text: input, pace: pace, random: &random)
-        XCTAssertEqual(steps.reduce(0) { $0 + $1.delay }, pace.targetDuration(for: expected.count), accuracy: 0.000001)
+        checkEqual(steps.reduce(0) { $0 + $1.delay }, pace.targetDuration(for: expected.count), accuracy: 0.000001)
         var replay = ""
         var corrections = 0
         for step in steps {
-            XCTAssertGreaterThan(step.delay, 0)
+            checkGreaterThan(step.delay, 0)
             switch step.edit {
             case .append(let insertion), .mistake(let insertion):
                 replay += insertion
             case .correct(let mistake, let replacement):
-                XCTAssertEqual(replay.last.map(String.init), mistake)
+                checkEqual(replay.last.map(String.init), mistake)
                 replay.removeLast()
                 replay += replacement
                 corrections += 1
             }
         }
-        XCTAssertGreaterThan(corrections, 0)
-        XCTAssertEqual(replay, expected)
+        checkGreaterThan(corrections, 0)
+        checkEqual(replay, expected)
     }
 
     func testDisabledCorrectionsAndEmptyText() {
         var random = RepeatableRandom()
         let pace = Pace(wordsPerMinute: 40, correctionPercent: 0)
-        XCTAssertTrue(TypingPlan.make(text: "", pace: pace, random: &random).isEmpty)
-        XCTAssertEqual(TypingPlan.make(text: "a🧪", pace: pace, random: &random).map(\.edit),
+        check(TypingPlan.make(text: "", pace: pace, random: &random).isEmpty)
+        checkEqual(TypingPlan.make(text: "a🧪", pace: pace, random: &random).map(\.edit),
                        [.append("a"), .append("🧪")])
     }
 }
